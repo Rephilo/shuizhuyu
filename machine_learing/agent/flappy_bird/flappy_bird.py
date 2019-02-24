@@ -164,11 +164,11 @@ def train_net_work(s, readout, h_fc1, sess):
               "/ Q_MAX %e" % np.max(readout_t))
 
 
-def playGame():
+def play_game():
     sess = tf.InteractiveSession()
     s, readout, h_fc1 = create_net_work()
     train_net_work(s, readout, h_fc1, sess)
 
 
 if __name__ == '__main__':
-    playGame()
+    play_game()
