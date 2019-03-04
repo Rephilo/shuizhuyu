@@ -40,7 +40,7 @@ def fill_univ_list(ulist, html):
 
 
 def print_univ_list(ulist, num):
-    tplp = "{0:^12}\t{1:{4}^12}\t{2:^12}\t{3:^12}"
+    tplp = "{0:^12}\t{1:{4}^12}\t{2:^12}\t{3.tree:^12}"
 
     print(tplp.format('排名', '学校名称', '省市', '总分', chr(12288)))
     for i in range(num):
