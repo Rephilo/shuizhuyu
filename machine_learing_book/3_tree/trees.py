@@ -1,5 +1,5 @@
-from math import log
 import operator
+from math import log
 
 
 def calc_shannon_ent(dataset):
@@ -78,5 +78,35 @@ def create_tree(dataset, labels):
     return my_tree
 
 
+def classify(input_tree, feat_labels, test_vec):
+    first_str = list(input_tree.keys())[0]
+    second_dict = input_tree[first_str]
+    feat_index = feat_labels.index(first_str)
+    for key in second_dict.keys():
+        if test_vec[feat_index] == key:
+            if type(second_dict[key]).__name__ == 'dict':
+                class_label = classify(second_dict[key], feat_labels, test_vec)
+            else:
+                class_label = second_dict[key]
+    return class_label
 
 
+def store_tree(input_tree, filename):
+    import pickle
+    fw = open(filename)
+    pickle.dump(input_tree, fw)
+    fw.close()
+
+
+def grab_tree(filename):
+    import pickle
+    fr = open(filename)
+    return pickle.load(fr)
+
+
+if __name__ == '__main__':
+    fr = open('/Users/wangxiao15/Desktop/machinelearninginaction/Ch03/lenses.txt')
+    lenses = [inst.strip().split('\t') for inst in fr.readlines()]
+    lenses_labels = ['age', 'prescript', 'astigmatic', 'tearRate']
+    lenses_tree = create_tree(lenses, lenses_labels)
+    create_plot(lenses_tree)
