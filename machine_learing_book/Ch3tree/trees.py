@@ -1,5 +1,6 @@
 import operator
 from math import log
+from machine_learing_book.Ch3tree.treePlotter import create_plot
 
 
 def calc_shannon_ent(dataset):
@@ -28,7 +29,7 @@ def split_dataset(dataset, axis, value):
 
 
 def choose_best_feature_to_split(dataset):
-    num_features = len(dataset)
+    num_features = len(dataset[0]) - 1
     base_entropy = calc_shannon_ent(dataset)
     best_info_gain = 0.0
     best_feature = -1
