@@ -1,5 +1,7 @@
 from numpy import *
 import re
+import operator
+import feedparser
 
 
 # NB = Navie Bayes
@@ -31,6 +33,14 @@ def set_of_words2vec(vocab_list, input_set):
         else:
             print("the word: %s is not in my vocabulary!", word)
     return return_vec
+
+
+def bagOfWords2VecMN(vocabList, inputSet):
+    returnVec = [0] * len(vocabList)
+    for word in inputSet:
+        if word in vocabList:
+            returnVec[vocabList.index(word)] += 1
+    return returnVec
 
 
 def trainNB0(train_matrix, train_category):
@@ -121,6 +131,75 @@ def spam_text():
     print('the error rate is: ', float(error_count) / len(test_set))
 
 
+def calc_most_freq(vocab_list, full_text):
+    freq_dict = {}
+    for token in vocab_list:
+        freq_dict[token] = full_text.count(token)
+    sorted_freq = sorted(freq_dict.items(),
+                         key=operator.itemgetter(1),
+                         reverse=True)
+    return sorted_freq[:30]
+
+
+def local_words(feed1, feed0):
+    doc_list = []
+    class_list = []
+    full_text = []
+    min_len = min(len(feed1['entries']), len(feed0['entries']))
+    for i in range(min_len):
+        word_list = text_parse(feed1['entries'][i]['summy'])
+        doc_list.append(word_list)
+        full_text.extend(word_list)
+        class_list.append(1)
+        word_list = text_parse(feed0['entries'][i]['summy'])
+        doc_list.append(word_list)
+        full_text.extend(word_list)
+        class_list.append(1)
+    vocab_list = create_vocab_list(doc_list)
+    top30words = calc_most_freq(vocab_list, full_text)
+    for pairW in top30words:
+        if pairW[0] in vocab_list:
+            vocab_list.remove(pairW[0])
+    training_set = list(range(2 * min_len))
+    test_set = []
+    for i in range(20):
+        rand_index = int(random.uniform(0, len(training_set)))
+        test_set.append(training_set[rand_index])
+        del (training_set[rand_index])
+    train_mat = []
+    train_class_mat = []
+    for doc_index in training_set:
+        train_mat.append(bagOfWords2VecMN(vocab_list, doc_list[doc_index]))
+        train_class_mat.append(class_list[doc_index])
+    p0v, p1v, pSpam = trainNB0(array(train_mat), array(train_class_mat))
+    error_count = 0
+    for doc_index in test_set:
+        word_vector = bagOfWords2VecMN(vocab_list, doc_list[doc_index])
+        if classifyNB(array(word_vector), p0v, p1v, pSpam) != class_list[doc_index]:
+            error_count += 1
+    print('the error rate is: ', float(error_count) / len(test_set))
+    return vocab_list, p0v, p1v
+
+
+def get_top_words(ny, sf):
+    vocab_list, p0v, p1v = local_words(ny, sf)
+    topNy = []
+    topSf = []
+    for i in range(len(p0v)):
+        if p0v[i] > -6.0:
+            topSf.append((vocab_list[i], p0v[i]))
+        if p1v[i] > -6.0:
+            topNy.append((vocab_list[i], p1v[i]))
+    sortedSf = sorted(topSf, key=lambda pair: pair[1], reverse=True)
+    print("SFSFSFSF")
+    for item in sortedSf:
+        print(item[0])
+    sortedNy = sorted(topNy, key=lambda pair: pair[1], reverse=True)
+    print("NYNYNY")
+    for item in sortedNy:
+        print(item[0])
+
+
 if __name__ == '__main__':
     # for i in range(1, 26):
     #     try:
@@ -130,4 +209,9 @@ if __name__ == '__main__':
     #         print(i)
     #     finally:
     #         print(wordList)
-    spam_text()
+    # 校验哪个txt文件中有乱码
+
+    ny = feedparser.parse('http://newyork.craigslist.org/stp/index.rss')
+    sf = feedparser.parse('http://sfbay.craigslist.org/stp/index.rss')
+    vocab_list, pSF, pNY = local_words(ny, sf)
+    vocab_list, pSF, pNY = local_words(ny, sf)
