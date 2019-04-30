@@ -1,5 +1,8 @@
 from numpy import *
 import matplotlib.pyplot as plt
+from time import sleep
+import json
+import urllib.request
 
 
 def load_data_set(file_name):
@@ -124,6 +127,41 @@ def stage_wise(x_arr, y_arr, eps=0.01, num_it=100):
     return return_mat
 
 
+def search_for_set(ret_x, ret_y, set_num, yr, num_pce, orig_prc):
+    sleep(1)
+    my_api_str = 'AIzaSyD2cR2KFyx12hXu6PFU-wrWot3NXvko8vY'
+    # 访问不通了。。。
+    search_url = 'https://www.googleapis.com/shopping/search/v1/public/products?key=%s&country=US&q=lego+%d&alt=json' \
+                 % (my_api_str, set_num)
+    pg = urllib.request.urlopen(search_url)
+    ret_dict = json.loads(pg.read())
+    for i in range(len(ret_dict['items'])):
+        try:
+            curr_item = ret_dict['items'][i]
+            if curr_item['product']['condition'] == 'new':
+                new_flag = 1
+            else:
+                new_flag = 0
+            list_of_inv = curr_item['product']['inventories']
+            for item in list_of_inv:
+                selling_price = item['price']
+                if selling_price > orig_prc * 0.5:
+                    print("%d\t%d\t%d\t%f\t%f") % (yr, num_pce, new_flag, orig_prc, selling_price)
+                    ret_x.append([yr, num_pce, new_flag, orig_prc])
+                    ret_y.append(selling_price)
+        except:
+            print('problem with item %d') % i
+
+
+def set_data_collect(ret_x, ret_y):
+    search_for_set(ret_x, ret_y, 8288, 2006, 800, 49.99)
+    search_for_set(ret_x, ret_y, 10030, 2002, 3096, 269.99)
+    search_for_set(ret_x, ret_y, 10179, 2007, 5195, 499.99)
+    search_for_set(ret_x, ret_y, 10181, 2007, 3428, 199.99)
+    search_for_set(ret_x, ret_y, 10189, 2008, 5922, 299.99)
+    search_for_set(ret_x, ret_y, 10196, 2009, 3263, 249.99)
+
+
 def test_0():
     x_arr, y_arr = load_data_set('/Users/wangxiao15/Desktop/machinelearninginaction/Ch08/ex0.txt')
     ws = stand_regression(x_arr, y_arr)
@@ -168,4 +206,9 @@ def test_2():
 
 
 if __name__ == '__main__':
-    test_2()
+
+    lg_x = []
+    lg_y = []
+    set_data_collect(lg_x, lg_y)
+    print(lg_x)
+
